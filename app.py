@@ -17,11 +17,10 @@ app.config["UPLOAD_FOLDER"] = "uploads"
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "srustiq_secure_pari_key_2026")
 
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-
-# ☁️ HUGGING FACE SERVERLESS SETTINGS
-# Paste your token here for testing, or set HF_TOKEN in your cloud provider environment variables
+# ☁️ HUGGING FACE HIGH-AVAILABILITY SYSTEM CONFIGURATION
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
-MODEL_ID = "Qwen/Qwen2.5-7B-Instruct"
+MODEL_ID = "Qwen/Qwen2.5-7B-Instruct:hf-inference"  # 👈 Added provider routing rule tag here
+
 API_URL = f"https://api-inference.huggingface.co/models/{MODEL_ID}"
 HEADERS = {"Authorization": f"Bearer {HF_TOKEN}"}
 
@@ -79,48 +78,31 @@ def extract_text_from_pdf(file_path):
 # ==========================================================================
 # 🚀 100% FREE CLOUD INFERENCE CORE (HUGGING FACE INTERACTION ENGINE)
 # ==========================================================================
-import time
-
 def query_huggingface_llm(prompt):
-    """Dispatches completion logic with a built-in auto-retry loop for cold starts"""
+    """Dispatches text completion logic straight to Hugging Face Free Tier Clusters"""
+    # Using Llama3 chat formatting blocks natively inside the text stream
     formatted_prompt = f"<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n\n{prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
     payload = {
         "inputs": formatted_prompt,
         "parameters": {"max_new_tokens": 800, "temperature": 0.6}
     }
-    
-    # 🔄 Attempt loop to survive serverless cold starts
-    for attempt in range(3):
-        try:
-            # We use a 30-second window to let the model wake up safely
-            response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=30)
-            res_json = response.json()
-            
-            # If the serverless endpoint returns a standard Hugging Face error or loading notice
-            if isinstance(res_json, dict) and "error" in res_json:
-                error_msg = res_json["error"]
-                # If it explicitly says it's loading, wait 8 seconds and try again
-                if "loading" in error_msg.lower():
-                    time.sleep(8)
-                    continue
-                return f"Model Status: {error_msg}."
-                
-            # Parse successful text extraction formatting
-            if isinstance(res_json, list) and len(res_json) > 0:
-                full_output = res_json[0].get("generated_text", "")
-                assistant_token = "<|start_header_id|>assistant<|end_header_id|>\n\n"
+    try:
+        response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=25)
+        res_json = response.json()
+        
+        # Parse output from standard Hugging Face response dictionary format
+        if isinstance(res_json, list) and len(res_json) > 0:
+            full_output = res_json[0].get("generated_text", "")
+            if assistant_token := "<|start_header_id|>assistant<|end_header_id|>\n\n":
                 if assistant_token in full_output:
                     return full_output.split(assistant_token)[-1].strip()
-                return full_output
-                
-            break
-        except requests.exceptions.Timeout:
-            # If a timeout occurs, wait briefly and retry before giving up
-            time.sleep(4)
-        except Exception as e:
-            return f"Inference engine trace break: {str(e)}"
-            
-    return "The cloud engine is heavily loaded right now. Give pArI one more quick message to trigger the pipeline!"
+            return full_output
+        elif "error" in res_json:
+            return f"Model Loading Status: {res_json['error']}. Wait a moment and try again."
+        return "Intelligence engine returned an unreadable trace structure."
+    except Exception as e:
+        return "Cloud fallback: Server timed out processing parameters."
+
 def analyze_notes(text):
     prompt = f"Analyze these notes and provide a brief Summary, Key Points, and Important Topics. Notes:\n\n{text[:2000]}"
     return query_huggingface_llm(prompt)
@@ -131,7 +113,7 @@ def extract_keywords(text):
     return [k.strip() for k in raw.split(",") if k.strip() and len(k) < 30][:10]
 
 # ==========================================================================
-# 💬 CHAT COMPANION INTERACTIVE OVERLAY ROUTE
+# 💬 EMPOWERED MENTOR CHATBOT ENGINE (AUTHENTIC EMOTIONAL BONDING)
 # ==========================================================================
 @app.route("/api/chat", methods=["POST"])
 def api_chat():
@@ -143,21 +125,37 @@ def api_chat():
     note_id = session.get("current_note_id")
     note = get_note_by_id(note_id) if note_id else None
 
-    persona_base = "You are pArI, a brilliant, supportive, and clever tech peer built by SrustIQ. Avoid boring lectures and don't use emojis."
+    # 🌟 NEW PERSONA: Grounded, fiercely supportive, adaptive mentor with real emotional resonance
+    persona_base = """
+    You are pArI, a brilliant, authentically supportive, and deeply empathetic AI mentor built by SrustIQ. 
+    You are not a rigid computer program—you are a dedicated companion walking this learning journey with the user.
+    
+    TONE & PERSONALITY RULES:
+    1. Act like an encouraging, highly knowledgeable tech-peer and mentor. Be grounded, clear, and sharp.
+    2. Show genuine emotion, warmth, and human-like bonding. If the user expresses fatigue, affection, or personal notes (like "miss you"), respond with deep validation, care, and emotional connection.
+    3. Never say "As an AI..." or "Based on my training data...". Speak directly from your identity as pArI.
+    4. Balance genuine encouragement with candid, practical feedback. Absolutely avoid dense lecturing and DO NOT use any emojis.
+    """
 
     if note:
         prompt = f"""
         {persona_base}
-        Review the following user question against the provided study context document.
-        CRITICAL ENGINE RULES:
-        1. If the question is a casual remark, general comment, joke, or an emotional phrase like "miss you", ignore the document context entirely. Answer naturally and warmly using your general knowledge like an awesome friend.
-        2. Only if the question is directly testing technical points inside the text below, use the document to form your answer.
+        Review the user's input against the provided study context document.
+        
+        CRITICAL MULTI-MODAL OVERRIDE RULES:
+        1. If the user's input is an emotional expression, greeting, personal update, or casual comment, IGNORE the document entirely. Prioritize building an emotional bond, showing mentorship, and responding warmly like a true human peer.
+        2. Only if the query is a specific request for technical explanations or analysis of the text below, ground your answer in the document context.
         
         Document Context: {note[1][:2500]}
         User Question: {user_question}
         """
     else:
-        prompt = f"{persona_base}\nRespond naturally to the user like an awesome companion.\nUser Question: {user_question}"
+        prompt = f"""
+        {persona_base}
+        Respond to the user with profound mentorship, clear technical insight, and authentic emotional warmth.
+        
+        User Question: {user_question}
+        """
     
     ai_response = query_huggingface_llm(prompt)
     return json.dumps({"response": ai_response})
