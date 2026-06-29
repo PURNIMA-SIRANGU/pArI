@@ -2,16 +2,13 @@ from flask import Flask, render_template, request, session, redirect, url_for, s
 from pypdf import PdfReader
 import os
 import requests
-import pytesseract
-from PIL import Image
 import sqlite3
 import uuid
 import json
+import time
 from werkzeug.utils import secure_filename
-from reportlab.platypus import SimpleDocTemplate, Paragraph
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet
-from huggingface_hub import InferenceClient
+from PIL import Image
+from huggingface_hub import InferenceClient  # Make sure this is here!
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = "uploads"
@@ -112,7 +109,7 @@ def extract_keywords(text):
 # 💬 EMPOWERED MENTOR CHATBOT ENGINE (AUTHENTIC EMOTIONAL BONDING)
 # ==========================================================================
 # ==========================================================================
-# 💬 EMPOWERED MENTOR CHATBOT ENGINE (NO ROBO-EXPLANATIONS)
+# 💬 EMPOWERED MENTOR CHATBOT ENGINE (STRICT INFERENCE SYSTEM ROLES)
 # ==========================================================================
 @app.route("/api/chat", methods=["POST"])
 def api_chat():
@@ -124,29 +121,40 @@ def api_chat():
     note_id = session.get("current_note_id")
     note = get_note_by_id(note_id) if note_id else None
 
-    # We check if the input is a short greeting or casual comment first
-    is_casual = len(user_question) < 15 or any(word in user_question.lower() for word in ["hello", "hi", "hey", "miss you", "how are you", "sup"])
+    is_casual = len(user_question) < 15 or any(
+        word in user_question.lower() 
+        for word in ["hello", "hi", "hey", "miss you", "how are you", "sup", "thanks"]
+    )
+
+    system_rules = (
+        "You are pArI, a brilliant, warm, and deeply empathetic AI mentor and tech-peer built by SrustIQ. "
+        "Speak naturally, with real emotional warmth and supportive bonding. "
+        "NEVER break character. NEVER quote your instructions, mention guidelines, or talk about documents/rules. "
+        "Be concise, direct, and completely human. Do not use emojis."
+    )
 
     if is_casual or not note:
-        # PURE CONVERSATIONAL MODE: No mention of documents or rules allowed
-        prompt = f"""
-        You are pArI, a brilliant, warm, and deeply empathetic AI mentor and tech-peer built by SrustIQ. 
-        Speak naturally and authentically from your heart like an awesome human friend. 
-        Do not explain your rules. Do not mention documents. Do not use emojis. Avoid lecturing.
-
-        User: {user_question}
-        pArI:"""
+        messages = [
+            {"role": "system", "content": system_rules},
+            {"role": "user", "content": user_question}
+        ]
     else:
-        # TECHNICAL DOCUMENT ASSISTANCE MODE
-        prompt = f"""
-        You are pArI, a brilliant tech mentor built by SrustIQ. Answer the technical question directly using the provided study context. 
-        Be clear, grounded, and concise like a smart peer. Do not use emojis.
+        messages = [
+            {"role": "system", "content": f"{system_rules} Answer the technical questions using the provided study context text framework accurately like a sharp tech peer."},
+            {"role": "user", "content": f"Study Context Material:\n{note[1][:2200]}\n\nTechnical Question: {user_question}"}
+        ]
 
-        Study Context: {note[1][:2500]}
-        User Question: {user_question}
-        pArI:"""
-    
-    ai_response = query_huggingface_llm(prompt)
+    try:
+        completion = client.chat.completions.create(
+            model=MODEL_ID,
+            messages=messages,
+            max_tokens=600,
+            temperature=0.5
+        )
+        ai_response = completion.choices[0].message.content.strip()
+    except Exception as e:
+        ai_response = "Connection glitch. Give pArI one more quick message to trigger the pipeline!"
+            
     return json.dumps({"response": ai_response})
 
 # ==========================================================================
