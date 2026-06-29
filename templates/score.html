@@ -1,0 +1,25 @@
+{% extends 'layout.html' %}
+{% block title %}pArI – Quiz Evaluation Score{% endblock %}
+{% block content %}
+<div class="workspace-header">
+    <h1>🎯 Evaluation Metric Summary</h1>
+    <p class="subtitle">Performance analysis compiled from your dynamic session test answers.</p>
+</div>
+<div class="glass-card text-center" style="text-align: center; padding: 50px 20px; margin-bottom: 40px;">
+    <h2 style="font-family: 'Space Grotesk'; font-size: 48px; margin: 0 0 16px 0; color: var(--accent-indigo);">{{ score }} / {{ total }}</h2>
+    {% if score == total %}
+        <p style="font-size: 18px; font-weight: 600; color: var(--accent-success);">🏆 Master Level Recall Manifested! Excellent Performance.</p>
+    {% elif score >= (total / 2) %}
+        <p style="font-size: 18px; font-weight: 600; color: var(--accent-warning);">👍 Solid conceptual grasp. Continue running workspace cycles.</p>
+    {% else %}
+        <p style="font-size: 18px; font-weight: 600; color: var(--accent-danger);">📚 Core gaps identified. Review source documentation metrics again.</p>
+    {% endif %}
+</div>
+<div class="glass-card" style="margin-bottom: 45px;">
+    <h3 style="font-family: 'Space Grotesk'; margin: 0 0 16px 0;">Target Optimization Vectors</h3>
+    <ul style="margin: 0; padding-left: 20px; line-height: 1.8; color: var(--text-secondary);">
+        {% for topic in weak %}<li>{{ topic }}</li>{% endfor %}
+    </ul>
+</div>
+<a href="/workspace"><button class="primary-action-btn" style="margin: 0; width: auto;">Restart Workspace Engine</button></a>
+{% endblock %}

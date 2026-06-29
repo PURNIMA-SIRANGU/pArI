@@ -1,0 +1,52 @@
+{% extends 'layout.html' %}
+{% block title %}pArI - Platform Telemetry Analytics{% endblock %}
+
+{% block content %}
+<div class="workspace-container">
+    <div class="workspace-header">
+        <h1>Usage Ingestion Analytics</h1>
+        <p class="subtitle">High-level telemetry breakdown of document processing volumes mapped across input vectors.</p>
+    </div>
+
+    <div class="glass-card" style="max-width: 900px; margin: 30px auto 0 auto; padding: 40px;">
+        <canvas id="chart"></canvas>
+    </div>
+</div>
+
+<script>
+const telemetryPayload = JSON.parse('{{ data | tojson | safe }}');
+const trackingLabels = telemetryPayload.map(row => row[0]);
+const trackingValues = telemetryPayload.map(row => row[1]);
+
+new Chart(document.getElementById('chart'), {
+    type: 'bar',
+    data: {
+        labels: trackingLabels,
+        datasets: [{
+            label: 'Total Processed Batches',
+            data: trackingValues,
+            backgroundColor: '#4f46e5',
+            borderRadius: 8,
+            barThickness: 40
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: { 
+                beginAtZero: true, 
+                grid: { color: '#e2e8f0' },
+                ticks: { font: { family: 'Plus Jakarta Sans' } }
+            },
+            x: { 
+                grid: { display: false },
+                ticks: { font: { family: 'Plus Jakarta Sans', weight: 600 } }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

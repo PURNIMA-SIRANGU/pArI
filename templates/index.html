@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pArI - Engineered by SrustIQ</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='images/logo1.png') }}" type="image/x-icon">
+
+    <style>
+        body {
+            background-color: #030712 !important;
+            background-image: radial-gradient(circle at 50% -20%, #1e1b4b 0%, #030712 60%) !important;
+            color: #f3f4f6 !important;
+        }
+        
+        .premium-landing {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+        
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 30px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .brand-meta .brand-logo {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: #fff;
+        }
+        
+        .brand-meta .brand-tagline {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: #38bdf8;
+            margin-top: 2px;
+            display: block;
+        }
+        
+        .nav-links a {
+            color: #9ca3af;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            margin-left: 32px;
+        }
+        
+        .nav-links a:hover {
+            color: #fff;
+        }
+        
+        .hero-section {
+            text-align: center;
+            padding: 100px 0 60px 0;
+            max-width: 850px;
+            margin: 0 auto;
+        }
+        
+        .crafted-by-badge {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #9ca3af;
+            margin-bottom: 24px;
+        }
+        
+        .crafted-by-badge span {
+            color: #38bdf8;
+            margin-left: 5px;
+        }
+        
+        .hero-section h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 64px;
+            font-weight: 700;
+            line-height: 1.05;
+            letter-spacing: -0.05em;
+            margin: 0 0 24px 0;
+            background: linear-gradient(135deg, #ffffff 30%, #9ca3af 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .hero-section p.lead-text {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #9ca3af;
+            margin: 0 0 40px 0;
+        }
+        
+        .cta-group {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 80px;
+        }
+        
+        .btn-premium-primary {
+            background: #fff;
+            color: #030712;
+            font-weight: 700;
+            font-size: 15px;
+            padding: 16px 32px;
+            border-radius: 14px;
+            text-decoration: none;
+            display: inline-flex;
+        }
+        
+        .btn-premium-primary:hover {
+            background: transparent;
+            color: #fff;
+            border: 1px solid #fff;
+            transform: translateY(-2px);
+        }
+        
+        .btn-premium-secondary {
+            background: rgba(255,255,255,0.02);
+            color: #f3f4f6;
+            font-weight: 600;
+            font-size: 15px;
+            padding: 16px 32px;
+            border-radius: 14px;
+            text-decoration: none;
+            border: 1px solid rgba(255,255,255,0.05);
+            display: inline-flex;
+        }
+        
+        .btn-premium-secondary:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .feature-showcase {
+            padding: 40px 0 100px 0;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .section-title {
+            font-family: 'Space Grotesk', sans-serif;
+            text-align: center;
+            font-size: 32px;
+            letter-spacing: -0.03em;
+            margin-bottom: 48px;
+            color: #fff;
+        }
+        
+        .showcase-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+        
+        .showcase-card {
+            background: #0b1329;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 32px;
+            text-align: left;
+        }
+        
+        .showcase-card:hover {
+            border-color: rgba(56,189,248,0.2);
+            transform: translateY(-4px);
+        }
+        
+        .card-icon {
+            font-size: 24px;
+            font-weight: 700;
+            color: #38bdf8;
+            margin-bottom: 20px;
+        }
+        
+        .showcase-card h4 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 20px;
+            margin: 0 0 12px 0;
+            color: #fff;
+        }
+        
+        .showcase-card p {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #9ca3af;
+            margin: 0;
+        }
+        
+        .footer-brand-lockup {
+            text-align: center;
+            padding: 60px 0;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            color: #6b7280;
+            font-size: 13px;
+        }
+        
+        .footer-brand-lockup strong {
+            color: #9ca3af;
+        }
+    </style>
+</head>
+<body class="landing-body">
+
+<div class="premium-landing">
+    
+    <header class="navbar">
+        <div class="brand-meta">
+            <span class="brand-logo">pArI</span>
+            <span class="brand-tagline">Cognitive Workspace</span>
+        </div>
+        <nav class="nav-links">
+            <a href="/workspace">Workspace</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/analytics">Analytics</a>
+        </nav>
+    </header>
+
+    <main class="hero-section">
+        <div class="crafted-by-badge">
+            Crafted By <span>SrustIQ</span>
+        </div>
+        <h1>Engineering Intelligent Experiences for Knowledge Synthesis.</h1>
+        <p class="lead-text">
+            Transforming complex multi-modal lecture streams, raw texts, and structural documentation into crisp summaries, interactive evaluation models, and dynamic contextual answers.
+        </p>
+
+        <div class="cta-group">
+            <a href="/workspace" class="btn-premium-primary">Launch Workspace Engine</a>
+            <a href="#features" class="btn-premium-secondary">Review Technical Specs</a>
+        </div>
+    </main>
+
+    <section class="feature-showcase" id="features">
+        <h2 class="section-title">Isolated Processing Modalities</h2>
+        
+        <div class="showcase-grid">
+            
+            <div class="showcase-card">
+                <div class="card-icon">[Audio]</div>
+                <h4>Whisper Audio Pipeline</h4>
+                <p>Offloads audio data streams to remote serverless clusters, performing clean automatic speech transcription instantly.</p>
+            </div>
+
+            <div class="showcase-card">
+                <div class="card-icon">[Doc]</div>
+                <h4>Structural Document Parsing</h4>
+                <p>Ingests large structural PDFs, securely pulling clean plain text vectors out of complex multi-column reading patterns.</p>
+            </div>
+
+            <div class="showcase-card">
+                <div class="card-icon">[AI]</div>
+                <h4>Adaptive Testing Framework</h4>
+                <p>Queries generative models to dynamically compile multi-choice evaluation models custom-tailored to the submitted reading material.</p>
+            </div>
+
+        </div>
+    </section>
+
+    <footer class="footer-brand-lockup">
+        <p>Copyright 2026 pArI Project Ecosystem. All Rights Reserved. Engineered and Powered by <strong>SrustIQ</strong>.</p>
+    </footer>
+
+</div>
+
+</body>
+</html>

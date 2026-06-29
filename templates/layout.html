@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}pArI - Engineered by SrustIQ{% endblock %}</title>
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><mask id='circle'><circle cx='50' cy='50' r='50' fill='white'/></mask><g mask='url(%23circle)'><image href='/static/images/logo.png' width='100' height='100' preserveAspectRatio='xMidYMid slice'/></g></svg>" type="image/svg+xml">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="app-layout">
+    <div class="sidebar">
+        <div class="sidebar-brand">
+            <h2>pArI</h2>
+            <span class="brand-tagline">By SrustIQ</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/">Product Overview</a>
+            <a href="/workspace">Workspace Engine</a>
+            <a href="/dashboard">Session History</a>
+            
+            <hr style="border: 0; border-top: 1px solid var(--sidebar-border); margin: 20px 0; opacity: 0.6;">
+            
+            <div class="sidebar-feature-pizza">
+                {% if session.get('current_note_id') %}
+                    <a href="/note/{{ session['current_note_id'] }}" class="pizza-slice slice-top-left" title="Analysis Panel">Analysis</a>
+                    <a href="/flashcards/{{ session['current_note_id'] }}" class="pizza-slice slice-top-right" title="Flashcards">Flashcards</a>
+                    <a href="/timeline/{{ session['current_note_id'] }}" class="pizza-slice slice-bottom-left" title="Timeline View">Timeline</a>
+                    <a href="/revision/{{ session['current_note_id'] }}" class="pizza-slice slice-bottom-right" title="Revision Sheet">Revision</a>
+                {% else %}
+                    <a href="/note/all" class="pizza-slice slice-top-left" title="All Analyses">Analysis</a>
+                    <a href="/flashcards/all" class="pizza-slice slice-top-right" title="All Flashcards">Flashcards</a>
+                    <a href="/timeline/all" class="pizza-slice slice-bottom-left" title="All Timelines">Timeline</a>
+                    <a href="/revision/all" class="pizza-slice slice-bottom-right" title="All Revisions">Revision</a>
+                {% endif %}
+            </div>
+            
+            <hr style="border: 0; border-top: 1px solid var(--sidebar-border); margin: 20px 0; opacity: 0.6;">
+            
+            <a href="/analytics">Platform Analytics</a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        {% block content %}{% endblock %}
+        
+        <button class="chat-toggle-floating" onclick="toggleChatCanvas()" id="chatTriggerBtn">Ask pArI</button>
+    </div>
+
+    <div class="chat-sliding-panel" id="chatPanel">
+        <div class="chat-panel-header">
+            <h3>Doubt Resolution Hub</h3>
+            <button class="chat-panel-close" onclick="toggleChatCanvas()">Close</button>
+        </div>
+        
+        <div class="chat-panel-messages" id="chatMessageStream">
+            <div class="chat-bubble system-bubble">
+                <span class="bubble-meta">System</span>
+                <p>Hello. I am ready to resolve queries regarding your study documentation context.</p>
+            </div>
+        </div>
+
+        <div class="chat-panel-controls">
+            <div class="chat-input-wrapper">
+                <input type="text" id="chatPanelInput" placeholder="Ask pArI a doubt..." onkeydown="if(event.key === 'Enter') dispatchPanelMessage()">
+                <button onclick="dispatchPanelMessage()" class="chat-send-btn">Send</button>
+            </div>
+            <button onclick="startVoiceEngine()" class="chat-panel-voice-btn">Stream Voice Token</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleChatCanvas() {
+    const panel = document.getElementById("chatPanel");
+    panel.classList.toggle("panel-active");
+}
+
+async function dispatchPanelMessage() {
+    const inputElement = document.getElementById("chatPanelInput");
+    const messageText = inputElement.value.trim();
+    if (!messageText) return;
+
+    inputElement.value = "";
+    const stream = document.getElementById("chatMessageStream");
+
+    const userBubble = document.createElement("div");
+    userBubble.className = "chat-bubble user-bubble";
+    userBubble.innerHTML = `<span class="bubble-meta">User</span><p>${messageText}</p>`;
+    stream.appendChild(userBubble);
+    stream.scrollTop = stream.scrollHeight;
+
+    const thinkingBubble = document.createElement("div");
+    thinkingBubble.className = "chat-bubble system-bubble thinking-state";
+    thinkingBubble.id = "tempThinkingNode";
+    thinkingBubble.innerHTML = `<span class="bubble-meta">System</span><div class="typing-indicator"><span></span><span></span><span></span></div>`;
+    stream.appendChild(thinkingBubble);
+    stream.scrollTop = stream.scrollHeight;
+
+    try {
+        const response = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ question: messageText })
+        });
+        const data = await response.json();
+        
+        document.getElementById("tempThinkingNode").remove();
+
+        if (data.error) {
+            appendSystemMessage(`Error: ${data.error}`);
+        } else {
+            appendSystemMessageStream(data.response);
+        }
+    } catch (err) {
+        document.getElementById("tempThinkingNode").remove();
+        appendSystemMessage("Connection fault: Remote serverless execution framework timed out.");
+    }
+}
+
+function appendSystemMessage(text) {
+    const stream = document.getElementById("chatMessageStream");
+    const bubble = document.createElement("div");
+    bubble.className = "chat-bubble system-bubble";
+    bubble.innerHTML = `<span class="bubble-meta">System</span><p>${text}</p>`;
+    stream.appendChild(bubble);
+    stream.scrollTop = stream.scrollHeight;
+}
+
+function appendSystemMessageStream(text) {
+    const stream = document.getElementById("chatMessageStream");
+    const bubble = document.createElement("div");
+    bubble.className = "chat-bubble system-bubble";
+    bubble.innerHTML = `<span class="bubble-meta">System</span><p></p>`;
+    stream.appendChild(bubble);
+    
+    const textNode = bubble.querySelector("p");
+    let charIndex = 0;
+    
+    function renderNextToken() {
+        if (charIndex < text.length) {
+            textNode.textContent += text.charAt(charIndex);
+            charIndex++;
+            stream.scrollTop = stream.scrollHeight;
+            setTimeout(renderNextToken, Math.random() * 15 + 5);
+        }
+    }
+    renderNextToken();
+}
+
+function startVoiceEngine() {
+    if (!('webkitSpeechRecognition' in window) && !('speechRecognition' in window)) {
+        alert("Client framework fault: Speech API missing or blocked.");
+        return;
+    }
+    const SpeechRecognition = window.webkitSpeechRecognition || window.speechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.onstart = () => console.log("Voice channel listening...");
+    recognition.onresult = (event) => {
+        document.getElementById("chatPanelInput").value = event.results[0][0].transcript;
+    };
+    recognition.start();
+}
+</script>
+</body>
+</html>

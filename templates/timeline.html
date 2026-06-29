@@ -1,0 +1,37 @@
+{% extends 'layout.html' %}
+{% block title %}pArI - Chronological Milestones{% endblock %}
+
+{% block content %}
+<div class="workspace-container">
+    <div class="workspace-header">
+        <h1>Smart Chronological Timeline</h1>
+        <p class="subtitle">AI-extracted procedural pathways, date matrices, and execution steps mapped linearly.</p>
+    </div>
+
+    <div class="timeline-wrapper" style="position: relative; max-width: 800px; margin: 40px 0; padding-left: 40px;">
+        <div class="timeline-line" style="position: absolute; top: 0; left: 8px; width: 2px; height: 100%; background: var(--border-primary);"></div>
+
+        {% for element in timeline_data %}
+        <div class="timeline-node" style="position: relative; margin-bottom: 40px;">
+            <div style="position: absolute; top: 6px; left: -37px; width: 12px; height: 12px; background: var(--accent-indigo); border-radius: 50%; box-shadow: 0 0 10px rgba(79, 70, 229, 0.4);"></div>
+            
+            <div class="glass-card" style="padding: 24px; background: var(--bg-surface); border: 1px solid var(--border-primary); border-radius: 16px;">
+                <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--accent-indigo); letter-spacing: 0.05em; display: block; margin-bottom: 6px;">
+                    {{ element.time }}
+                </span>
+                <h3 style="font-family: 'Space Grotesk', sans-serif; margin: 0 0 10px 0; font-size: 18px; font-weight: 700;">
+                    {{ element.title }}
+                </h3>
+                <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--text-secondary);">
+                    {{ element.body }}
+                </p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div>
+        <a href="/note/{{ session['current_note_id'] }}"><button style="background: transparent; border: 1px solid var(--border-primary); color: var(--text-primary);">Back to Note Details</button></a>
+    </div>
+</div>
+{% endblock %}

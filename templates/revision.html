@@ -1,0 +1,17 @@
+{% extends 'layout.html' %}
+{% block title %}pArI - High Density Revision Sheet{% endblock %}
+
+{% block content %}
+<div class="workspace-container">
+    <div class="workspace-header">
+        <h1>Rapid Revision Guide</h1>
+        <p class="subtitle">High-density overview nodes optimized for clear conceptual tracking and speed review sessions.</p>
+    </div>
+
+    <div class="glass-card revision-container" style="position: relative; overflow: hidden; border-left: 4px solid var(--accent-purple); margin-bottom: 30px;">
+        <pre class="formatted-markdown">{{ revision }}</pre>
+    </div>
+
+    <a href="/note/{{ session['current_note_id'] }}"><button style="background: transparent; border: 1px solid var(--border-primary); color: var(--text-primary);">Back to Note Details</button></a>
+</div>
+{% endblock %}

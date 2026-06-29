@@ -1,0 +1,61 @@
+{% extends 'layout.html' %}
+{% block title %}pArI - Quiz Evaluation Mode{% endblock %}
+
+{% block content %}
+<div class="workspace-header">
+    <h1>Dynamic Evaluation Matrix</h1>
+    <p class="subtitle">AI-generated multiple-choice questions custom-tailored to test your recall on the current note topic.</p>
+</div>
+
+{% set progress = ((index - 1) / session['quiz']|length) * 100 %}
+
+<div class="progress-container" style="width: 100%; height: 6px; background: var(--border-primary); border-radius: 100px; margin-bottom: 40px; overflow: hidden;">
+    <div id="quizProgressBar" class="progress-bar-fill" data-progress="{{ progress }}" style="height: 100%; background: var(--text-primary); width: 0%; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+</div>
+
+<div class="glass-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <span style="font-size: 13px; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Question {{ index }} of {{ session['quiz']|length }}</span>
+        <div class="timer" style="font-weight: 700; font-size: 14px; color: var(--text-primary);">Time Left: <span id="time">30</span>s</div>
+    </div>
+
+    <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 22px; margin: 0 0 30px 0; line-height: 1.4;">{{ q.question }}</h3>
+
+    <form method="POST" id="quizForm">
+        <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 35px;">
+            {% for option in q.options %}
+                <label style="display: flex; align-items: center; background: var(--bg-main); border: 1px solid var(--border-primary); padding: 18px 24px; border-radius: 14px; cursor: pointer;">
+                    <input type="radio" name="option" value="{{ option }}" required style="margin-right: 16px;">
+                    <span style="font-size: 15px; font-weight: 500; color: var(--text-primary);">{{ option }}</span>
+                </label>
+            {% endfor %}
+        </div>
+
+        <button type="submit" class="primary-action-btn" style="margin: 0; width: auto; padding: 14px 35px;">Next Question ➜</button>
+    </form>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Dynamically assigns layout width from the dataset attribute to eliminate the linter error
+    const progressBar = document.getElementById("quizProgressBar");
+    if (progressBar) {
+        const targetWidth = progressBar.getAttribute("data-progress");
+        progressBar.style.width = targetWidth + "%";
+    }
+});
+
+let ticks = 30;
+const countdown = setInterval(() => {
+    ticks--;
+    document.getElementById("time").textContent = ticks;
+    if (ticks <= 5) {
+        document.querySelector(".timer").style.color = "var(--accent-danger)";
+    }
+    if (ticks <= 0) {
+        clearInterval(countdown);
+        document.getElementById("quizForm").submit();
+    }
+}, 1000);
+</script>
+{% endblock %}

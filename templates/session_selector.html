@@ -1,0 +1,35 @@
+{% extends 'layout.html' %}
+{% block title %}pArI - Select Active Session Module{% endblock %}
+
+{% block content %}
+<div class="workspace-container">
+    <div class="workspace-header">
+        <h1>Select Study Ingestion Context</h1>
+        <p class="subtitle">Choose a historical document partition below to generate or view your targeted <strong>{{ feature_name }}</strong> data grid.</p>
+    </div>
+
+    {% if notes %}
+        <div class="history-stack">
+        {% for note in notes %}
+            <div class="glass-card history-item-row" style="border: 1px solid var(--border-primary); border-radius: 16px; padding: 24px; background: var(--bg-surface); margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <div>
+                        <h3 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700;">Session Cluster #{{ note[0] }}</h3>
+                        <span style="font-size: 12px; color: var(--text-secondary); display: block; margin-top: 4px;">Log Timestamp: {{ note[2] }}</span>
+                    </div>
+                    <span class="bento-badge glow-purple" style="margin: 0;">{{ note[1] }} Ingestion</span>
+                </div>
+                
+                <div style="display: flex; gap: 12px; margin-top: 16px;">
+                    <a href="/{{ target_route }}/{{ note[0] }}"><button class="primary-action-btn" style="margin: 0; padding: 10px 20px; font-size: 13px;">Initialize {{ feature_name }}</button></a>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    {% else %}
+        <div class="glass-card" style="padding: 60px 20px; text-align: center;">
+            <p style="color: var(--text-secondary); font-size: 15px; margin: 0;">No active context elements stored. Please head back to the Workspace Hub to process a source document block.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

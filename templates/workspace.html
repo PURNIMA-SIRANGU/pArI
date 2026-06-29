@@ -1,0 +1,160 @@
+{% extends 'layout.html' %}
+{% block title %}pArI – Advanced Cognitive AI Workspace{% endblock %}
+
+{% block content %}
+<div class="workspace-container">
+    
+    <div class="workspace-header">
+        <h1>Workspace Hub</h1>
+        <p class="subtitle">Ingest lecture streams, documents, or raw notes to synthesize clean conceptual guides and evaluations.</p>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" id="ingestionForm">
+        <div class="bento-grid">
+            
+            <div class="glass-card col-span-2">
+                <span class="bento-badge glow-blue">Engine Core</span>
+                <h3 class="bento-title">Raw Study Context Ingestion</h3>
+                <textarea name="notes" placeholder="Paste clear markdown text, lecture transcripts, or summaries here..."></textarea>
+            </div>
+
+            <div class="glass-card">
+                <span class="bento-badge glow-purple">Multi-Modal</span>
+                <h3 class="bento-title">Drag & Drop Asset</h3>
+                <div class="drop-zone" id="interactiveDropZone">
+                    <div class="drop-icon">📂</div>
+                    <p class="drop-text">Drop files here or <span class="highlight-text">Browse Files</span></p>
+                    <span class="file-spec-hint">Supports PDF, PNG, JPG, MP3, WAV</span>
+                </div>
+                <input type="file" id="primaryFileInput" hidden>
+            </div>
+
+            <div class="glass-card col-span-3">
+                <span class="bento-badge glow-green">Data Pipelines</span>
+                <h3 class="bento-title">Isolated File Input Modalities</h3>
+                
+                <div class="pipeline-grid">
+                    <div class="pipeline-item">
+                        <label class="pipeline-label"> Cloud PDF Module</label>
+                        <input type="file" name="pdf" class="file-input-styled">
+                    </div>
+                    <div class="pipeline-item">
+                        <label class="pipeline-label">🎤 Audio Stream Engine</label>
+                        <input type="file" name="audio" class="file-input-styled">
+                    </div>
+                    <div class="pipeline-item">
+                        <label class="pipeline-label">📷 Vision OCR Scanner</label>
+                        <input type="file" name="image" class="file-input-styled">
+                    </div>
+                </div>
+
+                <button type="submit" class="primary-action-btn"> Synthesize Knowledge Matrix</button>
+            </div>
+
+        </div>
+    </form>
+
+    <div id="thinking" class="thinking-overlay glass-card">
+        <div class="spinner"></div>
+        <p style="margin: 0; font-weight: 600;">Analysis active via serverless cloud resources... Please wait.</p>
+    </div>
+
+    {% if result %}
+    <div class="workspace-section animate-fade-in">
+        <h2>📊 Synthesized Conceptual Architecture</h2>
+        <div class="glass-card" style="position: relative; border-left: 4px solid var(--accent-indigo);">
+            <pre class="formatted-markdown">{{ result }}</pre>
+        </div>
+
+        <div style="margin-top: 24px; display: flex; justify-content: flex-end;">
+            <a href="/start_test" style="text-decoration: none;">
+                <button class="test-btn"> Initialize Adaptive Knowledge Evaluation</button>
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="workspace-section">
+        <h2>💬 Deep Doubt Resolution System</h2>
+        <div class="glass-card">
+            <form method="POST" class="chat-inline-form">
+                <input type="text" name="question" placeholder="Query anything regarding the ingested document context..." required>
+                <button type="submit" class="chat-submit-btn">Ask pArI</button>
+            </form>
+
+            {% if answer %}
+            <div class="chat-response-wrapper">
+                <div class="avatar-badge"> System Response:</div>
+                <div class="chat-response-content">
+                    <p style="margin: 0; line-height: 1.6;">{{ answer }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        <button onclick="startVoiceEngine()" class="voice-btn"> Stream Real-Time Voice Token</button>
+    </div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const dropZone = document.getElementById("interactiveDropZone");
+    const primaryInput = document.getElementById("primaryFileInput");
+
+    dropZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropZone.classList.add("drop-zone-active");
+    });
+
+    ["dragleave", "drop"].forEach(evName => {
+        dropZone.addEventListener(evName, () => dropZone.classList.remove("drop-zone-active"));
+    });
+
+    dropZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        if (e.dataTransfer.files.length) {
+            primaryInput.files = e.dataTransfer.files;
+            routeInboundFile(e.dataTransfer.files[0]);
+        }
+    });
+
+    dropZone.addEventListener("click", () => primaryInput.click());
+    primaryInput.addEventListener("change", () => {
+        if (primaryInput.files.length) routeInboundFile(primaryInput.files[0]);
+    });
+
+    function routeInboundFile(file) {
+        const ext = file.name.split('.').pop().toLowerCase();
+        document.querySelectorAll('.pipeline-grid input[type="file"]').forEach(i => i.value = "");
+
+        if (ext === 'pdf') {
+            document.querySelector('input[name="pdf"]').files = primaryInput.files;
+            alert(`Selected "${file.name}" for PDF structural engine parsing.`);
+        } else if (['mp3', 'wav', 'm4a'].includes(ext)) {
+            document.querySelector('input[name="audio"]').files = primaryInput.files;
+            alert(`Selected "${file.name}" for Whisper cloud execution.`);
+        } else if (['png', 'jpg', 'jpeg'].includes(ext)) {
+            document.querySelector('input[name="image"]').files = primaryInput.files;
+            alert(`Selected "${file.name}" for Vision OCR mapping.`);
+        } else {
+            alert("⚠️ File extension signature mismatch.");
+        }
+    }
+});
+
+function startVoiceEngine() {
+    if (!('webkitSpeechRecognition' in window) && !('speechRecognition' in window)) {
+        alert("Client system error: Web Speech API vector missing or blocked.");
+        return;
+    }
+    const SpeechRecognition = window.webkitSpeechRecognition || window.speechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.onstart = () => alert(" pArI real-time capture active. Speak clearly...");
+    recognition.onresult = (event) => {
+        document.querySelector('input[name="question"]').value = event.results[0][0].transcript;
+    };
+    recognition.start();
+}
+</script>
+{% endblock %}

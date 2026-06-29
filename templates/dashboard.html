@@ -1,0 +1,34 @@
+{% extends 'layout.html' %}
+{% block title %}pArI - Session History Archive{% endblock %}
+
+{% block content %}
+<div class="workspace-container">
+    <div class="workspace-header">
+        <h1>Notes History Archive</h1>
+        <p class="subtitle">Review, export, or maintain historical multi-modal asset entries processed by SrustIQ analytics.</p>
+    </div>
+
+    {% if notes %}
+        <div class="history-stack">
+        {% for note in notes %}
+            <div class="glass-card history-item-row">
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <h3 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700;">Session Cluster #{{ note[0] }}</h3>
+                    <span class="bento-badge glow-purple" style="margin: 0;">{{ note[1] }}</span>
+                </div>
+                
+                <div style="display: flex; gap: 12px; margin-top: 8px; justify-content: flex-start; align-items: center; width: 100%;">
+                    <a href="/note/{{ note[0] }}"><button class="test-btn" style="padding: 10px 20px; font-size: 13px;">View Analysis</button></a>
+                    <a href="/export/{{ note[0] }}"><button class="voice-btn" style="padding: 10px 20px; font-size: 13px; margin: 0;">Export PDF</button></a>
+                    <a href="/delete/{{ note[0] }}"><button style="background: var(--accent-danger); color: white; padding: 10px 20px; font-size: 13px; border-radius: 12px;">Delete Record</button></a>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    {% else %}
+        <div class="glass-card" style="padding: 60px 20px; text-align: center;">
+            <p style="color: var(--text-secondary); font-size: 15px; margin: 0;">No ingestion logs tracked inside persistence cache yet.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

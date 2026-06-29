@@ -1,0 +1,14 @@
+<h1>🔎 Search Notes</h1>
+
+<form method="POST">
+    <input type="text" name="keyword">
+    <button>Search</button>
+</form>
+
+{% for note in results %}
+    <div class="glass-card">
+        <a href="/note/{{ note[0] }}">
+            📌 Session {{ note[0] }} – {{ note[1] }}
+        </a>
+    </div>
+{% endfor %}
