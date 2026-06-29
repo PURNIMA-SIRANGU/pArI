@@ -11,18 +11,22 @@ from werkzeug.utils import secure_filename
 from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
+from huggingface_hub import InferenceClient
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = "uploads"
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "srustiq_secure_pari_key_2026")
 
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-# ☁️ HUGGING FACE HIGH-AVAILABILITY SYSTEM CONFIGURATION
-HF_TOKEN = os.environ.get("HF_TOKEN", "")
-MODEL_ID = "Qwen/Qwen2.5-7B-Instruct:hf-inference"  # 👈 Added provider routing rule tag here
 
-API_URL = f"https://api-inference.huggingface.co/models/{MODEL_ID}"
-HEADERS = {"Authorization": f"Bearer {HF_TOKEN}"}
+# ☁️ HUGGING FACE SECURE INFERENCE CLIENT CONFIGURATION
+HF_TOKEN = os.environ.get("HF_TOKEN", "")
+MODEL_ID = "Qwen/Qwen2.5-7B-Instruct"
+
+client = InferenceClient(
+    provider="hf-inference",
+    api_key=HF_TOKEN
+)
 
 # ==========================================================================
 # 💾 PERSISTENT DATABASE ENGINE
@@ -76,32 +80,24 @@ def extract_text_from_pdf(file_path):
         return "PDF content extraction error."
 
 # ==========================================================================
-# 🚀 100% FREE CLOUD INFERENCE CORE (HUGGING FACE INTERACTION ENGINE)
+# 🚀 FREE CLOUD INFERENCE CORE (ROBUST INFERENCE CLIENT PIPELINE)
 # ==========================================================================
 def query_huggingface_llm(prompt):
-    """Dispatches text completion logic straight to Hugging Face Free Tier Clusters"""
-    # Using Llama3 chat formatting blocks natively inside the text stream
-    formatted_prompt = f"<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n\n{prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
-    payload = {
-        "inputs": formatted_prompt,
-        "parameters": {"max_new_tokens": 800, "temperature": 0.6}
-    }
+    """Routes generation vectors to high-availability cluster gateways via official SDK"""
     try:
-        response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=25)
-        res_json = response.json()
-        
-        # Parse output from standard Hugging Face response dictionary format
-        if isinstance(res_json, list) and len(res_json) > 0:
-            full_output = res_json[0].get("generated_text", "")
-            if assistant_token := "<|start_header_id|>assistant<|end_header_id|>\n\n":
-                if assistant_token in full_output:
-                    return full_output.split(assistant_token)[-1].strip()
-            return full_output
-        elif "error" in res_json:
-            return f"Model Loading Status: {res_json['error']}. Wait a moment and try again."
-        return "Intelligence engine returned an unreadable trace structure."
+        # The client automatically handles chat templates, connection protocols, and timeouts cleanly
+        completion = client.chat.completions.create(
+            model=MODEL_ID,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=800,
+            temperature=0.4
+        )
+        return completion.choices[0].message.content.strip()
     except Exception as e:
-        return "Cloud fallback: Server timed out processing parameters."
+        # Friendly mentor check: see if it's a connection/network slip
+        if "Failed to resolve" in str(e) or "connection" in str(e).lower():
+            return "Connection glitch. Make sure your local internet or server gateway is active and try sending that message again!"
+        return f"AI Bridge connection status error: {str(e)}"
 
 def analyze_notes(text):
     prompt = f"Analyze these notes and provide a brief Summary, Key Points, and Important Topics. Notes:\n\n{text[:2000]}"
@@ -286,7 +282,7 @@ def revision(note_id):
         return render_template("session_selector.html", notes=notes, feature_name="Revision Sheet", target_route="revision")
     note = get_note_by_id(int(note_id))
     prompt = f"Create a concise revision sheet using simple bullet points only. Notes:\n{note[1][:1800]}"
-    rev = call_cloud_llm(prompt) if 'call_cloud_llm' in globals() else query_huggingface_llm(prompt)
+    rev = query_huggingface_llm(prompt)
     return render_template("revision.html", revision=rev)
 
 @app.route("/note/<string:note_id>")
