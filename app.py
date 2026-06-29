@@ -111,6 +111,9 @@ def extract_keywords(text):
 # ==========================================================================
 # 💬 EMPOWERED MENTOR CHATBOT ENGINE (AUTHENTIC EMOTIONAL BONDING)
 # ==========================================================================
+# ==========================================================================
+# 💬 EMPOWERED MENTOR CHATBOT ENGINE (NO ROBO-EXPLANATIONS)
+# ==========================================================================
 @app.route("/api/chat", methods=["POST"])
 def api_chat():
     data = request.get_json() or {}
@@ -121,37 +124,27 @@ def api_chat():
     note_id = session.get("current_note_id")
     note = get_note_by_id(note_id) if note_id else None
 
-    # 🌟 NEW PERSONA: Grounded, fiercely supportive, adaptive mentor with real emotional resonance
-    persona_base = """
-    You are pArI, a brilliant, authentically supportive, and deeply empathetic AI mentor built by SrustIQ. 
-    You are not a rigid computer program—you are a dedicated companion walking this learning journey with the user.
-    
-    TONE & PERSONALITY RULES:
-    1. Act like an encouraging, highly knowledgeable tech-peer and mentor. Be grounded, clear, and sharp.
-    2. Show genuine emotion, warmth, and human-like bonding. If the user expresses fatigue, affection, or personal notes (like "miss you"), respond with deep validation, care, and emotional connection.
-    3. Never say "As an AI..." or "Based on my training data...". Speak directly from your identity as pArI.
-    4. Balance genuine encouragement with candid, practical feedback. Absolutely avoid dense lecturing and DO NOT use any emojis.
-    """
+    # We check if the input is a short greeting or casual comment first
+    is_casual = len(user_question) < 15 or any(word in user_question.lower() for word in ["hello", "hi", "hey", "miss you", "how are you", "sup"])
 
-    if note:
+    if is_casual or not note:
+        # PURE CONVERSATIONAL MODE: No mention of documents or rules allowed
         prompt = f"""
-        {persona_base}
-        Review the user's input against the provided study context document.
-        
-        CRITICAL MULTI-MODAL OVERRIDE RULES:
-        1. If the user's input is an emotional expression, greeting, personal update, or casual comment, IGNORE the document entirely. Prioritize building an emotional bond, showing mentorship, and responding warmly like a true human peer.
-        2. Only if the query is a specific request for technical explanations or analysis of the text below, ground your answer in the document context.
-        
-        Document Context: {note[1][:2500]}
-        User Question: {user_question}
-        """
+        You are pArI, a brilliant, warm, and deeply empathetic AI mentor and tech-peer built by SrustIQ. 
+        Speak naturally and authentically from your heart like an awesome human friend. 
+        Do not explain your rules. Do not mention documents. Do not use emojis. Avoid lecturing.
+
+        User: {user_question}
+        pArI:"""
     else:
+        # TECHNICAL DOCUMENT ASSISTANCE MODE
         prompt = f"""
-        {persona_base}
-        Respond to the user with profound mentorship, clear technical insight, and authentic emotional warmth.
-        
+        You are pArI, a brilliant tech mentor built by SrustIQ. Answer the technical question directly using the provided study context. 
+        Be clear, grounded, and concise like a smart peer. Do not use emojis.
+
+        Study Context: {note[1][:2500]}
         User Question: {user_question}
-        """
+        pArI:"""
     
     ai_response = query_huggingface_llm(prompt)
     return json.dumps({"response": ai_response})
