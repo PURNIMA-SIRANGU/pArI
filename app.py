@@ -21,7 +21,7 @@ os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 # ☁️ HUGGING FACE SERVERLESS SETTINGS
 # Paste your token here for testing, or set HF_TOKEN in your cloud provider environment variables
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
-MODEL_ID = "meta-llama/Meta-Llama-3-8B-Instruct"
+MODEL_ID = "Qwen/Qwen2.5-7B-Instruct"
 API_URL = f"https://api-inference.huggingface.co/models/{MODEL_ID}"
 HEADERS = {"Authorization": f"Bearer {HF_TOKEN}"}
 
