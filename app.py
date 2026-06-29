@@ -79,31 +79,48 @@ def extract_text_from_pdf(file_path):
 # ==========================================================================
 # 🚀 100% FREE CLOUD INFERENCE CORE (HUGGING FACE INTERACTION ENGINE)
 # ==========================================================================
+import time
+
 def query_huggingface_llm(prompt):
-    """Dispatches text completion logic straight to Hugging Face Free Tier Clusters"""
-    # Using Llama3 chat formatting blocks natively inside the text stream
+    """Dispatches completion logic with a built-in auto-retry loop for cold starts"""
     formatted_prompt = f"<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n\n{prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
     payload = {
         "inputs": formatted_prompt,
         "parameters": {"max_new_tokens": 800, "temperature": 0.6}
     }
-    try:
-        response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=25)
-        res_json = response.json()
-        
-        # Parse output from standard Hugging Face response dictionary format
-        if isinstance(res_json, list) and len(res_json) > 0:
-            full_output = res_json[0].get("generated_text", "")
-            if assistant_token := "<|start_header_id|>assistant<|end_header_id|>\n\n":
+    
+    # 🔄 Attempt loop to survive serverless cold starts
+    for attempt in range(3):
+        try:
+            # We use a 30-second window to let the model wake up safely
+            response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=30)
+            res_json = response.json()
+            
+            # If the serverless endpoint returns a standard Hugging Face error or loading notice
+            if isinstance(res_json, dict) and "error" in res_json:
+                error_msg = res_json["error"]
+                # If it explicitly says it's loading, wait 8 seconds and try again
+                if "loading" in error_msg.lower():
+                    time.sleep(8)
+                    continue
+                return f"Model Status: {error_msg}."
+                
+            # Parse successful text extraction formatting
+            if isinstance(res_json, list) and len(res_json) > 0:
+                full_output = res_json[0].get("generated_text", "")
+                assistant_token = "<|start_header_id|>assistant<|end_header_id|>\n\n"
                 if assistant_token in full_output:
                     return full_output.split(assistant_token)[-1].strip()
-            return full_output
-        elif "error" in res_json:
-            return f"Model Loading Status: {res_json['error']}. Wait a moment and try again."
-        return "Intelligence engine returned an unreadable trace structure."
-    except Exception as e:
-        return "Cloud fallback: Server timed out processing parameters."
-
+                return full_output
+                
+            break
+        except requests.exceptions.Timeout:
+            # If a timeout occurs, wait briefly and retry before giving up
+            time.sleep(4)
+        except Exception as e:
+            return f"Inference engine trace break: {str(e)}"
+            
+    return "The cloud engine is heavily loaded right now. Give pArI one more quick message to trigger the pipeline!"
 def analyze_notes(text):
     prompt = f"Analyze these notes and provide a brief Summary, Key Points, and Important Topics. Notes:\n\n{text[:2000]}"
     return query_huggingface_llm(prompt)
