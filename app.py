@@ -20,10 +20,7 @@ os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
 MODEL_ID = "Qwen/Qwen2.5-7B-Instruct"
 
-client = InferenceClient(
-    provider="hf-inference",
-    api_key=HF_TOKEN
-)
+client = InferenceClient(api_key=HF_TOKEN)
 
 # ==========================================================================
 # 💾 PERSISTENT DATABASE ENGINE
