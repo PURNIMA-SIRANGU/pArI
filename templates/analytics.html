@@ -1,52 +1,75 @@
 {% extends 'layout.html' %}
-{% block title %}pArI - Platform Telemetry Analytics{% endblock %}
+{% block title %}pArI – Cognitive Matrix Analytics{% endblock %}
 
 {% block content %}
-<div class="workspace-container">
+<div class="workspace-container animate-fade-in">
+    
     <div class="workspace-header">
-        <h1>Usage Ingestion Analytics</h1>
-        <p class="subtitle">High-level telemetry breakdown of document processing volumes mapped across input vectors.</p>
+        <h1>Platform System Analytics</h1>
+        <p class="subtitle">Real-time breakdown tracking metrics of active knowledge processing domains and historical uploads.</p>
     </div>
 
-    <div class="glass-card" style="max-width: 900px; margin: 30px auto 0 auto; padding: 40px;">
-        <canvas id="chart"></canvas>
+    <div class="bento-grid">
+        <div class="glass-card">
+            <span class="bento-badge glow-blue">Data Layer</span>
+            <h3 class="bento-title">Total Processed Assets</h3>
+            <p style="font-size: 3rem; font-weight: 700; color: var(--accent-indigo); margin: 10px 0;">
+                {{ total_sessions }}
+            </p>
+            <p class="subtitle" style="margin: 0;">Unique sessions compiled securely within local database storage blocks.</p>
+        </div>
+
+        <div class="glass-card col-span-2" style="min-height: 320px;">
+            <span class="bento-badge glow-purple">Modality Vector</span>
+            <h3 class="bento-title">Ingestion Pipeline Distribution</h3>
+            <div style="width: 100%; height: 200px; position: relative;">
+                <canvas id="analyticsChart"></canvas>
+            </div>
+        </div>
     </div>
+
 </div>
 
 <script>
-const telemetryPayload = JSON.parse('{{ data | tojson | safe }}');
-const trackingLabels = telemetryPayload.map(row => row[0]);
-const trackingValues = telemetryPayload.map(row => row[1]);
+document.addEventListener("DOMContentLoaded", function() {
+    const ctx = document.getElementById('analyticsChart').getContext('2d');
+    
+    // Safely parse raw list parameters directly from Flask context variables
+    const labelsData = JSON.parse('{{ labels | safe }}');
+    const valuesData = JSON.parse('{{ data_values | safe }}');
 
-new Chart(document.getElementById('chart'), {
-    type: 'bar',
-    data: {
-        labels: trackingLabels,
-        datasets: [{
-            label: 'Total Processed Batches',
-            data: trackingValues,
-            backgroundColor: '#4f46e5',
-            borderRadius: 8,
-            barThickness: 40
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: { display: false }
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labelsData.length ? labelsData : ["No Data Loaded"],
+            datasets: [{
+                label: 'Processed Sessions by Stream Source',
+                data: valuesData.length ? valuesData : [0],
+                backgroundColor: 'rgba(79, 70, 229, 0.65)',
+                borderColor: '#4f46e5',
+                borderWidth: 1.5,
+                borderRadius: 8
+            }]
         },
-        scales: {
-            y: { 
-                beginAtZero: true, 
-                grid: { color: '#e2e8f0' },
-                ticks: { font: { family: 'Plus Jakarta Sans' } }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1, color: '#475569' },
+                    grid: { color: '#e2e8f0' }
+                },
+                x: {
+                    ticks: { color: '#475569' },
+                    grid: { display: false }
+                }
             },
-            x: { 
-                grid: { display: false },
-                ticks: { font: { family: 'Plus Jakarta Sans', weight: 600 } }
+            plugins: {
+                legend: { display: false }
             }
         }
-    }
+    });
 });
 </script>
 {% endblock %}

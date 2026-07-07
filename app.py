@@ -354,6 +354,37 @@ def dashboard():
         cursor.execute("SELECT id, type, timestamp FROM history ORDER BY id DESC")
         notes = cursor.fetchall()
     return render_template("dashboard.html", notes=notes)
+# ==========================================================================
+# 📊 PLATFORM ANALYTICS PIPELINE
+# ==========================================================================
+@app.route("/analytics")
+def analytics():
+    try:
+        with sqlite3.connect("notes.db") as conn:
+            cursor = conn.cursor()
+            
+            # 1. Fetch total count of all ingested documents
+            cursor.execute("SELECT COUNT(*) FROM history")
+            total_sessions = cursor.fetchone()[0]
+            
+            # 2. Group sessions by their ingestion modality type
+            cursor.execute("SELECT type, COUNT(*) FROM history GROUP BY type")
+            modality_distribution = cursor.fetchall()
+            
+        # Structure data maps dynamically for our frontend JavaScript Chart logic
+        labels = [item[0] for item in modality_distribution]
+        data_values = [item[1] for item in modality_distribution]
+        
+    except Exception:
+        total_sessions = 0
+        labels = ["Text", "PDF", "Image", "Audio"]
+        data_values = [0, 0, 0, 0]
 
+    return render_template(
+        "analytics.html", 
+        total_sessions=total_sessions, 
+        labels=json.dumps(labels), 
+        data_values=json.dumps(data_values)
+    )
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
