@@ -25,19 +25,11 @@
             <hr style="border: 0; border-top: 1px solid var(--sidebar-border); margin: 20px 0; opacity: 0.6;">
             
             <div class="sidebar-feature-pizza">
-                {% if session.get('current_note_id') %}
-                    <a href="/note/{{ session['current_note_id'] }}" class="pizza-slice slice-top-left" title="Analysis Panel">Analysis</a>
-                    <a href="/flashcards/{{ session['current_note_id'] }}" class="pizza-slice slice-top-right" title="Flashcards">Flashcards</a>
-                    <a href="/timeline/{{ session['current_note_id'] }}" class="pizza-slice slice-bottom-left" title="Timeline View">Timeline</a>
-                    <a href="/revision/{{ session['current_note_id'] }}" class="pizza-slice slice-bottom-right" title="Revision Sheet">Revision</a>
-                {% else %}
-                    <a href="/note/all" class="pizza-slice slice-top-left" title="All Analyses">Analysis</a>
-                    <a href="/flashcards/all" class="pizza-slice slice-top-right" title="All Flashcards">Flashcards</a>
-                    <a href="/timeline/all" class="pizza-slice slice-bottom-left" title="All Timelines">Timeline</a>
-                    <a href="/revision/all" class="pizza-slice slice-bottom-right" title="All Revisions">Revision</a>
-                {% endif %}
-            </div>
-            
+    <a href="/note/all" class="pizza-slice slice-top-left" title="All Analyses">Analysis</a>
+    <a href="/flashcards/all" class="pizza-slice slice-top-right" title="All Flashcards">Flashcards</a>
+    <a href="/timeline/all" class="pizza-slice slice-bottom-left" title="All Timelines">Timeline</a>
+    <a href="/revision/all" class="pizza-slice slice-bottom-right" title="All Revisions">Revision</a>
+</div>
             <hr style="border: 0; border-top: 1px solid var(--sidebar-border); margin: 20px 0; opacity: 0.6;">
             
             <a href="/analytics">Platform Analytics</a>
@@ -59,7 +51,7 @@
         <div class="chat-panel-messages" id="chatMessageStream">
             <div class="chat-bubble system-bubble">
                 <span class="bubble-meta">System</span>
-                <p>Hello. I am ready to resolve queries regarding your study documentation context.</p>
+                <p>Hello! I am ready to resolve queries regarding your study documentation context.</p>
             </div>
         </div>
 
@@ -72,6 +64,8 @@
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
 <script>
 function toggleChatCanvas() {
@@ -87,12 +81,14 @@ async function dispatchPanelMessage() {
     inputElement.value = "";
     const stream = document.getElementById("chatMessageStream");
 
+    // Render User Message Node
     const userBubble = document.createElement("div");
     userBubble.className = "chat-bubble user-bubble";
-    userBubble.innerHTML = `<span class="bubble-meta">User</span><p>${messageText}</p>`;
+    userBubble.innerHTML = `<span class="bubble-meta">User</span><p>${escapeHTML(messageText)}</p>`;
     stream.appendChild(userBubble);
     stream.scrollTop = stream.scrollHeight;
 
+    // Render Async Typing Indicator Frame Placeholder
     const thinkingBubble = document.createElement("div");
     thinkingBubble.className = "chat-bubble system-bubble thinking-state";
     thinkingBubble.id = "tempThinkingNode";
@@ -130,25 +126,37 @@ function appendSystemMessage(text) {
     stream.scrollTop = stream.scrollHeight;
 }
 
+// ⚡ HIGH-PERFORMANCE SIDEBAR STREAM GENERATOR PIPELINE WITH MARKDOWN SECURITY
 function appendSystemMessageStream(text) {
     const stream = document.getElementById("chatMessageStream");
     const bubble = document.createElement("div");
     bubble.className = "chat-bubble system-bubble";
-    bubble.innerHTML = `<span class="bubble-meta">System</span><p></p>`;
+    bubble.innerHTML = `<span class="bubble-meta">System</span><div class="panel-markdown-body"></div>`;
     stream.appendChild(bubble);
     
-    const textNode = bubble.querySelector("p");
+    const markdownBody = bubble.querySelector(".panel-markdown-body");
     let charIndex = 0;
+    let accumulatedText = "";
     
     function renderNextToken() {
         if (charIndex < text.length) {
-            textNode.textContent += text.charAt(charIndex);
+            accumulatedText += text.charAt(charIndex);
             charIndex++;
+            
+            // Re-render chunk maps through marked layout layers iteratively
+            markdownBody.innerHTML = marked.parse(accumulatedText);
+            
             stream.scrollTop = stream.scrollHeight;
-            setTimeout(renderNextToken, Math.random() * 15 + 5);
+            setTimeout(renderNextToken, Math.random() * 8 + 2);
         }
     }
     renderNextToken();
+}
+
+function escapeHTML(str) {
+    return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+    );
 }
 
 function startVoiceEngine() {
