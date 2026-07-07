@@ -1,55 +1,31 @@
-# --- OPTION 1: CLEAN CLEAN FLASHCARD ENGINE ---
-@app.route("/flashcards/<int:note_id>")
-def flashcards(note_id):
-    note = get_note_by_id(note_id)
-    if not note: 
-        return "Note matrix missing", 404
-    
-    # Prompting Llama3 to return a strictly predictable pattern for front/back parsing
-    prompt = f"""
-    Analyze these study notes and extract exactly 6 high-impact flashcards for active recall.
-    You must format every single flashcard strictly as follows:
-    Q: Write the question or concept term here
-    A: Write the concise grounded definition or answer here
-    
-    Do not add introductory greeting text, do not add numbered lists, and do not use emojis.
+{% extends 'layout.html' %}
+{% block title %}pArI – Active Recall Matrix{% endblock %}
 
-    Notes:
-    {note[1][:2500]}
-    """
-    cards = call_ollama(prompt)
-    return render_template("flashcards.html", cards=cards)
+{% block content %}
+<div class="workspace-container animate-fade-in">
+    <div class="workspace-header">
+        <h1>Active Recall Flashcards</h1>
+        <p class="subtitle">Click any card matrix geometry block to dynamically trigger the 3D rotation flip state and inspect the verified answer profile.</p>
+    </div>
 
-
-# --- OPTION 2: NEW SMART TIMELINE PIPELINE ---
-@app.route("/timeline/<int:note_id>")
-def timeline(note_id):
-    note = get_note_by_id(note_id)
-    if not note:
-        return "Note context missing", 404
-
-    # Extract chronology or step sequences in a clean pseudo-JSON structured array
-    prompt = f"""
-    Analyze the following notes and extract all chronological events, historical dates, execution steps, or milestone sequences.
-    You must respond ONLY with a valid, raw JSON array matching this exact schema, without markdown formatting blocks or conversational descriptions:
-    [
-      {{"time": "Date, Time, or Step Number", "title": "Milestone Title", "body": "Short explanation of what occurs here"}}
-    ]
-
-    Notes:
-    {note[1][:3000]}
-    """
-    raw_json = call_ollama(prompt)
-    
-    try:
-        clean_str = raw_json[raw_json.find("["):raw_json.rfind("]")+1]
-        timeline_data = json.loads(clean_str)
-    except Exception:
-        # Fallback sequence timeline if the local model skips formatting constraints
-        timeline_data = [
-            {"time": "Phase 1", "title": "Context Ingestion", "body": "Raw text multi-modal file vectors are accepted by the pipeline framework."},
-            {"time": "Phase 2", "title": "Semantic Processing", "body": "Local LLM instances deconstruct paragraphs into summary architectures."},
-            {"time": "Phase 3", "title": "Active Evaluation", "body": "Dynamic MCQ matrices and 3D flashcard decks are synthesized on the fly."}
-        ]
-
-    return render_template("timeline.html", timeline_data=timeline_data)
+    <div class="flashcard-matrix">
+        {% for card in cards %}
+        <div class="card-3d-scene" onclick="this.classList.toggle('is-flipped')">
+            <div class="card-3d-inner">
+                
+                <div class="card-face card-front">
+                    <span class="face-tag">Question Concept</span>
+                    <p>{{ card.q }}</p>
+                </div>
+                
+                <div class="card-face card-back">
+                    <span class="face-tag">Grounded Solution</span>
+                    <p>{{ card.a }}</p>
+                </div>
+                
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -63,7 +63,8 @@
     <div class="workspace-section animate-fade-in">
         <h2>📊 Synthesized Conceptual Architecture</h2>
         <div class="glass-card" style="position: relative; border-left: 4px solid var(--accent-indigo);">
-            <pre class="formatted-markdown">{{ result }}</pre>
+            <textarea id="rawMarkdown" style="display:none;">{{ result }}</textarea>
+            <div id="markdownTarget" class="formatted-markdown-rendered"></div>
         </div>
 
         <div style="margin-top: 24px; display: flex; justify-content: flex-end;">
@@ -76,52 +77,93 @@
 
     <div class="workspace-section">
         <h2>💬 Deep Doubt Resolution System</h2>
-        <div class="glass-card">
-            <form method="POST" class="chat-inline-form">
-                <input type="text" name="question" placeholder="Query anything regarding the ingested document context..." required>
-                <button type="submit" class="chat-submit-btn">Ask pArI</button>
-            </form>
-
-            {% if answer %}
-            <div class="chat-response-wrapper">
-                <div class="avatar-badge"> System Response:</div>
-                <div class="chat-response-content">
-                    <p style="margin: 0; line-height: 1.6;">{{ answer }}</p>
+        <div class="chat-interface-wrapper">
+            
+            <div class="chat-messages-container" id="chatContainer">
+                <div class="message-row pari-row">
+                    <div class="chat-bubble">
+                        <span class="bubble-meta">pArI Engine</span>
+                        Hey there! I am locked and loaded. Paste any reference study materials or text above, and ask me your doubts whenever you are ready!
+                    </div>
                 </div>
+                
+                {% if answer %}
+                <div class="message-row pari-row">
+                    <div class="chat-bubble">
+                        <span class="bubble-meta">pArI Engine</span>
+                        <div class="server-rendered-markdown" data-raw="{{ answer }}"></div>
+                    </div>
+                </div>
+                {% endif %}
             </div>
-            {% endif %}
+
+            <div class="chat-input-panel">
+                <form id="asyncChatForm" class="chat-inline-form-updated" onsubmit="dispatchUserPrompt(event)">
+                    <input type="text" id="userQuestionInput" placeholder="Query anything regarding the ingested document context..." required autocomplete="off">
+                    <button type="submit" class="chat-submit-btn-updated">Send</button>
+                </form>
+            </div>
+
         </div>
         <button onclick="startVoiceEngine()" class="voice-btn"> Stream Real-Time Voice Token</button>
     </div>
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const dropZone = document.getElementById("interactiveDropZone");
     const primaryInput = document.getElementById("primaryFileInput");
 
-    dropZone.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        dropZone.classList.add("drop-zone-active");
-    });
+    // --- Markdown Rendering Pipeline ---
+    const rawMarkdownContainer = document.getElementById("rawMarkdown");
+    const markdownTarget = document.getElementById("markdownTarget");
+    if (rawMarkdownContainer && markdownTarget && typeof marked !== 'undefined') {
+        markdownTarget.innerHTML = marked.parse(rawMarkdownContainer.value);
+    }
 
-    ["dragleave", "drop"].forEach(evName => {
-        dropZone.addEventListener(evName, () => dropZone.classList.remove("drop-zone-active"));
-    });
-
-    dropZone.addEventListener("drop", (e) => {
-        e.preventDefault();
-        if (e.dataTransfer.files.length) {
-            primaryInput.files = e.dataTransfer.files;
-            routeInboundFile(e.dataTransfer.files[0]);
+    // --- Parse Inline Pre-existing Elements ---
+    document.querySelectorAll(".server-rendered-markdown").forEach(el => {
+        const rawContent = el.getAttribute("data-raw");
+        if (rawContent) {
+            el.innerHTML = marked.parse(rawContent);
         }
     });
 
-    dropZone.addEventListener("click", () => primaryInput.click());
-    primaryInput.addEventListener("change", () => {
-        if (primaryInput.files.length) routeInboundFile(primaryInput.files[0]);
-    });
+    // --- Auto Ingestion Spinner Trigger ---
+    const ingestionForm = document.getElementById("ingestionForm");
+    if(ingestionForm) {
+        ingestionForm.addEventListener("submit", function() {
+            document.getElementById("thinking").style.display = "block";
+        });
+    }
+
+    // --- Drag & Drop Core Events ---
+    if (dropZone) {
+        dropZone.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            dropZone.classList.add("drop-zone-active");
+        });
+
+        ["dragleave", "drop"].forEach(evName => {
+            dropZone.addEventListener(evName, () => dropZone.classList.remove("drop-zone-active"));
+        });
+
+        dropZone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files.length) {
+                primaryInput.files = e.dataTransfer.files;
+                routeInboundFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        dropZone.addEventListener("click", () => primaryInput.click());
+        primaryInput.addEventListener("change", () => {
+            if (primaryInput.files.length) routeInboundFile(primaryInput.files[0]);
+        });
+    }
 
     function routeInboundFile(file) {
         const ext = file.name.split('.').pop().toLowerCase();
@@ -142,6 +184,88 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 });
 
+// --- Dynamic Async Chat Engine Interface ---
+async function dispatchUserPrompt(event) {
+    event.preventDefault();
+    
+    const inputEl = document.getElementById("userQuestionInput");
+    const container = document.getElementById("chatContainer");
+    const promptText = inputEl.value.trim();
+    
+    if (!promptText) return;
+
+    // 1. Append User Input row instantly to the window layout matrix
+    const userRow = `
+        <div class="message-row user-row">
+            <div class="chat-bubble user-bubble-style">
+                <span class="bubble-meta" style="color: rgba(255,255,255,0.7);">User</span>
+                ${escapeHTML(promptText)}
+            </div>
+        </div>
+    `;
+    container.insertAdjacentHTML("beforeend", userRow);
+    inputEl.value = "";
+    container.scrollTop = container.scrollHeight;
+
+    // 2. Append temporary visual typing placeholder frame
+    const loaderId = "loader_" + Date.now();
+    const loadingPlaceholder = `
+        <div class="message-row pari-row" id="${loaderId}">
+            <div class="chat-bubble">
+                <span class="bubble-meta">pArI Engine</span>
+                <div class="typing-indicator"><span></span><span></span><span></span></div>
+            </div>
+        </div>
+    `;
+    container.insertAdjacentHTML("beforeend", loadingPlaceholder);
+    container.scrollTop = container.scrollHeight;
+
+    try {
+        const response = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ question: promptText })
+        });
+        
+        const data = await response.json();
+        
+        // Remove typing tracker loader element
+        document.getElementById(loaderId).remove();
+
+        // 3. Parse server message cleanly through marked.js pipeline
+        const parsedHTMLContent = marked.parse(data.response || data.error || "Engine error trace drop.");
+
+        // 4. Inject formatted Mentor answer bubble cleanly
+        const pariRow = `
+            <div class="message-row pari-row">
+                <div class="chat-bubble">
+                    <span class="bubble-meta">pArI Engine</span>
+                    <div class="markdown-bubble-body">${parsedHTMLContent}</div>
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML("beforeend", pariRow);
+    } catch (err) {
+        document.getElementById(loaderId).remove();
+        container.insertAdjacentHTML("beforeend", `
+            <div class="message-row pari-row">
+                <div class="chat-bubble" style="border-color: var(--accent-danger);">
+                    <span class="bubble-meta" style="color: var(--accent-danger);">Error</span>
+                    AI Pipeline dropped verification constraints. Try again!
+                </div>
+            </div>
+        `);
+    }
+    
+    container.scrollTop = container.scrollHeight;
+}
+
+function escapeHTML(str) {
+    return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+    );
+}
+
 function startVoiceEngine() {
     if (!('webkitSpeechRecognition' in window) && !('speechRecognition' in window)) {
         alert("Client system error: Web Speech API vector missing or blocked.");
@@ -150,9 +274,9 @@ function startVoiceEngine() {
     const SpeechRecognition = window.webkitSpeechRecognition || window.speechRecognition;
     const recognition = new SpeechRecognition();
     recognition.lang = 'en-US';
-    recognition.onstart = () => alert(" pArI real-time capture active. Speak clearly...");
+    recognition.onstart = () => alert("pArI real-time capture active. Speak clearly...");
     recognition.onresult = (event) => {
-        document.querySelector('input[name="question"]').value = event.results[0][0].transcript;
+        document.getElementById('userQuestionInput').value = event.results[0][0].transcript;
     };
     recognition.start();
 }
